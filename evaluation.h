@@ -45,4 +45,6 @@ tl_value *tl_value_read(mpc_ast_t *t);
 
 tl_value *tl_value_add_cell(tl_value *v, tl_value *x);
 
+char *tl_type_name(int type);
+
 #endif //evaluation_h

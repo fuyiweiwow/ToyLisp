@@ -1,4 +1,5 @@
 #include "data_handling.h"
+#include <stdarg.h>
 
 tl_env *new_env(void)
 {
@@ -19,8 +20,7 @@ tl_value *tl_env_get(tl_env *e, tl_value *k)
         }
     }
     
-
-    return tl_err("unbound symbol!");
+    return tl_err_ex("unbound symbol '%s'!", k->sym);
 }
 
 void tl_env_put(tl_env *e, tl_value *k, tl_value *v)
@@ -73,6 +73,22 @@ tl_value *tl_err(char *err)
     v->type = TL_VAL_ERR;
     v->err = malloc(strlen(err) + 1);
     strcpy(v->err, err);
+    return v;
+}
+
+tl_value *tl_err_ex(char *fmt, ...)
+{
+    tl_value * v = malloc(sizeof(tl_value));
+    v->type = TL_VAL_ERR;
+    va_list va;
+    va_start(va, fmt);
+
+    v->err = malloc(512);
+    vsnprintf(v->err, 511, fmt, va);
+    v->err = realloc(v->err, strlen(v->err) + 1);
+
+    va_end(va);
+
     return v;
 }
 

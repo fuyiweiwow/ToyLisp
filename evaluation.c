@@ -1,6 +1,10 @@
 #include "evaluation.h"
-#define BUILTIN_ASSERT(args, cond, err) \
-    if (!(cond)) { destroy_tl_value(args); return tl_err(err); }
+#define BUILTIN_ASSERT(args, cond, fmt, ...) \
+    if (!(cond)) { \
+        tl_value *err = tl_err_ex(fmt, ##__VA_ARGS__); \
+        destroy_tl_value(args); \
+        return err;\
+    }
 
 void tl_env_add_builtins(tl_env *e)
 {
@@ -82,10 +86,19 @@ tl_value *builtin_op(tl_env* e, tl_value *v, char *op)
 {
     for (size_t i = 0; i < v->count; i++)
     {
-        if (v->cell[i]->type != TL_VAL_NUM)
+        int cell_type = v->cell[i]->type;   
+        if (cell_type != TL_VAL_NUM)
         {
             destroy_tl_value(v);
-            return tl_err("cannot operate on non-number!");
+            BUILTIN_ASSERT(
+                v, 
+                cell_type == TL_VAL_NUM, 
+                "function '%s' passed incorrect type for argument %i. "
+                "Got %s, Expected %s!", 
+                op,
+                i,
+                tl_type_name(cell_type), 
+                tl_type_name(TL_VAL_NUM));
         }
     }
     
@@ -153,8 +166,20 @@ tl_value *builtin_div(tl_env *e, tl_value *v)
 
 tl_value *builtin_head(tl_env *e, tl_value *v)
 {
-    BUILTIN_ASSERT(v, v->count == 1, "function 'head' passed invalid parameters!");
-    BUILTIN_ASSERT(v, v->cell[0]->type == TL_VAL_QEXPR, "function 'head' passed incorrect type!");
+    BUILTIN_ASSERT(
+        v, 
+        v->count == 1, 
+        "function 'head' passed invalid parameters. "
+        "Got %i, Expected %i!", 
+        v->count, 
+        1);
+    BUILTIN_ASSERT(
+        v, 
+        v->cell[0]->type == TL_VAL_QEXPR, 
+        "function 'head' passed incorrect type for argument 0. "
+        "Got %s, Expected %s!", 
+        tl_type_name(v->cell[0]->type), 
+        tl_type_name(TL_VAL_QEXPR));
     BUILTIN_ASSERT(v, v->cell[0]->count != 0, "function 'head' passed {}!");
 
     tl_value *x = tl_value_take(v, 0);
@@ -168,8 +193,20 @@ tl_value *builtin_head(tl_env *e, tl_value *v)
 
 tl_value *builtin_tail(tl_env* e, tl_value *v)
 {
-    BUILTIN_ASSERT(v, v->count == 1, "function 'tail' passed invalid parameters!");
-    BUILTIN_ASSERT(v, v->cell[0]->type == TL_VAL_QEXPR, "function 'tail' passed incorrect type!");
+    BUILTIN_ASSERT(
+        v, 
+        v->count == 1, 
+        "function 'tail' passed invalid parameters. "
+        "Got %i, Expected %i!", 
+        v->count, 
+        1);
+    BUILTIN_ASSERT(
+        v, 
+        v->cell[0]->type == TL_VAL_QEXPR, 
+        "function 'tail' passed incorrect type for argument 0. "
+        "Got %s, Expected %s!", 
+        tl_type_name(v->cell[0]->type), 
+        tl_type_name(TL_VAL_QEXPR));
     BUILTIN_ASSERT(v, v->cell[0]->count != 0, "function 'tail' passed {}!");
 
     tl_value *x = tl_value_take(v, 0);
@@ -186,8 +223,20 @@ tl_value *builtin_list(tl_env* e, tl_value *v)
 
 tl_value *builtin_eval(tl_env* e, tl_value *v)
 {
-    BUILTIN_ASSERT(v, v->count == 1, "function 'eval' passed invalid parameters!");
-    BUILTIN_ASSERT(v, v->cell[0]->type == TL_VAL_QEXPR, "function 'eval' passed incorrect type!");
+    BUILTIN_ASSERT(
+        v, 
+        v->count == 1, 
+        "function 'eval' passed invalid parameters. "
+        "Got %i, Expected %i!", 
+        v->count, 
+        1);
+    BUILTIN_ASSERT(
+        v, 
+        v->cell[0]->type == TL_VAL_QEXPR, 
+        "function 'eval' passed incorrect type for argument 0. "
+        "Got %s, Expected %s!", 
+        tl_type_name(v->cell[0]->type), 
+        tl_type_name(TL_VAL_QEXPR));
 
     tl_value *x = tl_value_take(v, 0);
     x->type = TL_VAL_SEXPR;
@@ -214,7 +263,13 @@ tl_value *builtin_join(tl_env* e,tl_value *v)
 
 tl_value *builtin_def(tl_env *e, tl_value *v)
 {
-    BUILTIN_ASSERT(v, v->cell[0]->type == TL_VAL_QEXPR, "function 'def' passed incorrect type!");
+    BUILTIN_ASSERT(
+        v, 
+        v->cell[0]->type == TL_VAL_QEXPR, 
+        "function 'def' passed incorrect type for argument 0. "
+        "Got %s, Expected %s!", 
+        tl_type_name(v->cell[0]->type), 
+        tl_type_name(TL_VAL_QEXPR));
 
     // symbol list
     tl_value *syms = v->cell[0];
@@ -340,4 +395,18 @@ tl_value *tl_value_add_cell(tl_value *v, tl_value *x)
     v->cell = realloc(v->cell, sizeof(tl_value*) * v->count);
     v->cell[v->count - 1] = x;
     return v;
+}
+
+char *tl_type_name(int type)
+{
+    switch (type)
+    {
+        case TL_VAL_NUM:   return "Number";
+        case TL_VAL_ERR:   return "Error";
+        case TL_VAL_SYM:   return "Symbol";
+        case TL_VAL_SEXPR: return "S-Expression";
+        case TL_VAL_QEXPR: return "Q-Expression";
+        case TL_VAL_FUNC:  return "Function";
+        default:           return "Unknown";
+    }    
 }

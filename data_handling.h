@@ -54,6 +54,8 @@ tl_value *tl_num(long x);
 
 tl_value *tl_err(char *err);
 
+tl_value *tl_err_ex(char *fmt, ...);
+
 tl_value *tl_sym(char *sym);
 
 tl_value *tl_sexpr(void);
