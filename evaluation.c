@@ -10,6 +10,7 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "tail", builtin_tail);
     tl_env_add_builtin(e, "eval", builtin_eval);
     tl_env_add_builtin(e, "join", builtin_join);
+    tl_env_add_builtin(e, "def" , builtin_def);
     /* Mathematical Functions */
     tl_env_add_builtin(e, "+", builtin_add);
     tl_env_add_builtin(e, "-", builtin_sub);
@@ -213,7 +214,25 @@ tl_value *builtin_join(tl_env* e,tl_value *v)
 
 tl_value *builtin_def(tl_env *e, tl_value *v)
 {
-    return NULL;
+    BUILTIN_ASSERT(v, v->cell[0]->type == TL_VAL_QEXPR, "function 'def' passed incorrect type!");
+
+    // symbol list
+    tl_value *syms = v->cell[0];
+    for (size_t i = 0; i < syms->count; i++)
+    {
+        BUILTIN_ASSERT(v, syms->cell[i]->type == TL_VAL_SYM, "function 'def' cannot define non-symbol");
+    }
+
+    BUILTIN_ASSERT(v, syms->count == v->count - 1, "function 'def' cannot define incorrect number of values to symbols");
+
+    for (size_t i = 0; i < syms->count; i++)
+    {
+        tl_env_put(e, syms->cell[i], v->cell[i + 1]);
+    }
+    
+    destroy_tl_value(v);
+    // return empty () if successful
+    return tl_sexpr();
 }
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)
