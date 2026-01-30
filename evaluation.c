@@ -47,6 +47,8 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "==", builtin_eq);
     tl_env_add_builtin(e, "!=", builtin_ne);
 
+    tl_env_add_builtin(e, "if", builtin_if);
+
 }
 
 tl_value *evaluate(tl_env *e, tl_value *v)
@@ -480,6 +482,31 @@ int tl_value_eq(tl_value *x, tl_value *y)
 
     return 0;
 }
+
+tl_value *builtin_if(tl_env *e, tl_value *v)
+{
+    BUILTIN_ARGS_COUNT_ASSERT("if", v, 3);
+    BUILTIN_ARGS_TYPE_ASSERT("if", v, 0, TL_VAL_NUM);
+    BUILTIN_ARGS_TYPE_ASSERT("if", v, 1, TL_VAL_QEXPR);
+    BUILTIN_ARGS_TYPE_ASSERT("if", v, 2, TL_VAL_QEXPR);
+
+    tl_value *x;
+    v->cell[1]->type = TL_VAL_SEXPR;
+    v->cell[2]->type = TL_VAL_SEXPR;
+
+    if (v->cell[0]->num)
+    {
+        x = evaluate(e, tl_value_pop(v, 1));
+    }
+    else
+    {
+        x = evaluate(e, tl_value_pop(v, 2));
+    }
+
+    destroy_tl_value(v);
+    return x;
+}
+
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)
 {

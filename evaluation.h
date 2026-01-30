@@ -63,6 +63,8 @@ tl_value *builtin_cmp(tl_env* e, tl_value *v, char *op);
 
 int tl_value_eq(tl_value *x, tl_value *y);
 
+tl_value *builtin_if(tl_env* e, tl_value *v);
+
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func);
 
 tl_value *tl_func_call(tl_env* e, tl_value *f, tl_value *a);
