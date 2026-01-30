@@ -1,14 +1,14 @@
 #include "parsing.h"
 
-#define GRAMMAR                                                     \
-    "                                                               \
-        number    : /-?[0-9]+/ ;                                    \
-        string    : /\"(\\\\.|[^\"])*\"/ ;                          \
-        symbol    : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;               \
-        sexpr     : '(' <expr>* ')' ;                               \
-        qexpr     : '{' <expr>* '}' ;                               \
-        expr      : <number> | <symbol> | <sexpr> | <qexpr> ;       \
-        tl        : /^/ <expr>* /$/ ;                               \
+#define GRAMMAR                                                             \
+    "                                                                       \
+        number    : /-?[0-9]+/ ;                                            \
+        string    : /\"(\\\\.|[^\"])*\"/ ;                                  \
+        symbol    : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;                       \
+        sexpr     : '(' <expr>* ')' ;                                       \
+        qexpr     : '{' <expr>* '}' ;                                       \
+        expr      : <number> | <string> | <symbol> | <sexpr> | <qexpr> ;    \
+        tl        : /^/ <expr>* /$/ ;                                       \
     "
 
 
