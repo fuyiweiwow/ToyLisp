@@ -6,14 +6,14 @@
         return err;\
     }
 
-#define FUNC_ARGS_COUNT_ASSERT(fn, v, cnt) \
+#define BUILTIN_ARGS_COUNT_ASSERT(fn, v, cnt) \
         BUILTIN_ASSERT(v, v->count == cnt, \
             "Function '%s' passed incorrect number of arguments. " \
             "Got %i, Expected %i.", \
             fn, v->count, cnt)
     
 
-#define FUNC_ARGS_TYPE_ASSERT(fn, v, idx, a_type) \
+#define BUILTIN_ARGS_TYPE_ASSERT(fn, v, idx, a_type) \
         BUILTIN_ASSERT(v, v->cell[idx]->type == a_type, \
             "Function '%s' passed incorrect type for argument %i. " \
             "Got %s, Expected %s.", \
@@ -293,9 +293,9 @@ tl_value *builtin_def(tl_env *e, tl_value *v)
 
 tl_value *builtin_lambda(tl_env *e, tl_value *v)
 {
-    FUNC_ARGS_COUNT_ASSERT("\\", v, 2);
-    FUNC_ARGS_TYPE_ASSERT("\\", v, 0, TL_VAL_QEXPR);
-    FUNC_ARGS_TYPE_ASSERT("\\", v, 1, TL_VAL_QEXPR);
+    BUILTIN_ARGS_COUNT_ASSERT("\\", v, 2);
+    BUILTIN_ARGS_TYPE_ASSERT("\\", v, 0, TL_VAL_QEXPR);
+    BUILTIN_ARGS_TYPE_ASSERT("\\", v, 1, TL_VAL_QEXPR);
 
     for (size_t i = 0; i < v->cell[0]->count; i++)
     {
@@ -315,7 +315,7 @@ tl_value *builtin_lambda(tl_env *e, tl_value *v)
 
 tl_value *builtin_var(tl_env *e, tl_value *v, char *func)
 {
-    FUNC_ARGS_TYPE_ASSERT(func, v, 0, TL_VAL_QEXPR);
+    BUILTIN_ARGS_TYPE_ASSERT(func, v, 0, TL_VAL_QEXPR);
     tl_value *syms = v->cell[0];
     for (size_t i = 0; i < syms->count; i++)
     {
