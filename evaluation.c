@@ -39,6 +39,10 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "*", builtin_mul);
     tl_env_add_builtin(e, "/", builtin_div);
     tl_env_add_builtin(e, "\\", builtin_lambda);
+    tl_env_add_builtin(e, ">", builtin_gt);
+    tl_env_add_builtin(e, "<", builtin_lt);
+    tl_env_add_builtin(e, ">=", builtin_ge);
+    tl_env_add_builtin(e, "<=", builtin_le);
 
 }
 
@@ -351,6 +355,54 @@ tl_value *builtin_var(tl_env *e, tl_value *v, char *func)
        
     destroy_tl_value(v);
     return tl_sexpr();
+}
+
+tl_value *builtin_gt(tl_env *e, tl_value *v)
+{
+    return builtin_order(e, v, ">");
+}
+
+tl_value *builtin_lt(tl_env *e, tl_value *v)
+{
+    return builtin_order(e, v, "<");
+}
+
+tl_value *builtin_ge(tl_env *e, tl_value *v)
+{
+    return builtin_order(e, v, ">="); 
+}
+    
+tl_value *builtin_le(tl_env *e, tl_value *v)
+{
+    return builtin_order(e, v, "<=");
+}
+
+tl_value *builtin_order(tl_env *e, tl_value *v, char *op)
+{
+    BUILTIN_ARGS_COUNT_ASSERT(op, v, 2);
+    BUILTIN_ARGS_TYPE_ASSERT(op, v, 0, TL_VAL_NUM);
+    BUILTIN_ARGS_TYPE_ASSERT(op, v, 1, TL_VAL_NUM);
+
+    int r = 0;
+    if (strcmp(op, ">") == 0)
+    {
+        r = (v->cell[0]->num > v->cell[1]->num);
+    }
+    else if (strcmp(op, "<") == 0)
+    {
+        r = (v->cell[0]->num < v->cell[1]->num);
+    }
+    else if (strcmp(op, ">=") == 0)
+    {
+        r = (v->cell[0]->num >= v->cell[1]->num);
+    }
+    else if (strcmp(op, "<=") == 0)
+    {
+        r = (v->cell[0]->num <= v->cell[1]->num);
+    }
+
+    destroy_tl_value(v);
+    return tl_num(r);
 }
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)

@@ -45,6 +45,16 @@ tl_value *builtin_lambda(tl_env* e, tl_value *v);
 
 tl_value *builtin_var(tl_env* e, tl_value *v, char *func);
 
+tl_value *builtin_gt(tl_env* e, tl_value *v);
+
+tl_value *builtin_lt(tl_env* e, tl_value *v);
+
+tl_value *builtin_ge(tl_env* e, tl_value *v);
+
+tl_value *builtin_le(tl_env* e, tl_value *v);
+
+tl_value *builtin_order(tl_env* e, tl_value *v, char *op);
+
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func);
 
 tl_value *tl_func_call(tl_env* e, tl_value *f, tl_value *a);
