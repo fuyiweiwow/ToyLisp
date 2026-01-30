@@ -77,6 +77,8 @@ tl_value *tl_value_take(tl_value *v, int i);
 
 tl_value *tl_value_read_num(mpc_ast_t *t);
 
+tl_value *tl_value_read_str(mpc_ast_t *t);
+
 tl_value *tl_value_read(mpc_ast_t *t);
 
 tl_value *tl_value_add_cell(tl_value *v, tl_value *x);

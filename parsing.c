@@ -3,6 +3,7 @@
 #define GRAMMAR                                                     \
     "                                                               \
         number    : /-?[0-9]+/ ;                                    \
+        string    : /\"(\\\\.|[^\"])*\"/ ;                          \
         symbol    : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;               \
         sexpr     : '(' <expr>* ')' ;                               \
         qexpr     : '{' <expr>* '}' ;                               \
@@ -21,6 +22,7 @@ tl_parser *build_parser()
     parser->q_expr      = mpc_new("qexpr");
     parser->expr        = mpc_new("expr");
     parser->tl          = mpc_new("tl");
+    parser->string      = mpc_new("string");
 
     // Define use mpc api
     mpca_lang(  MPCA_LANG_DEFAULT,
@@ -30,6 +32,7 @@ tl_parser *build_parser()
                 parser->s_expr,
                 parser->q_expr,
                 parser->expr,
+                parser->string,
                 parser->tl);
 
     return parser;
@@ -38,11 +41,12 @@ tl_parser *build_parser()
 void destroy_parser(tl_parser *parser)
 {
     mpc_cleanup(
-        6, 
+        7, 
         parser->number, 
         parser->symbol, 
         parser->expr, 
         parser->q_expr,
         parser->s_expr,
+        parser->string,
         parser->tl);
 }

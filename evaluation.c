@@ -629,6 +629,22 @@ tl_value *tl_value_read_num(mpc_ast_t *t)
     return (errno != ERANGE) ? tl_num(x) : tl_err("invalid number");
 }
 
+tl_value *tl_value_read_str(mpc_ast_t *t)
+{
+    /* Cut off the final quote character */
+    t->contents[strlen(t->contents)-1] = '\0';
+    /* Copy the string missing out the first quote character */
+    char* unescaped = malloc(strlen(t->contents+1)+1);
+    strcpy(unescaped, t->contents+1);
+    /* Pass through the unescape function */
+    unescaped = mpcf_unescape(unescaped);
+    /* Construct a new lval using the string */
+    tl_value* str = tl_str(unescaped);
+    /* Free the string and return */
+    free(unescaped);
+    return str;
+}
+
 tl_value *tl_value_read(mpc_ast_t *t)
 {
     if (strstr(t->tag, "number"))
@@ -639,6 +655,11 @@ tl_value *tl_value_read(mpc_ast_t *t)
     if (strstr(t->tag, "symbol"))
     {
         return tl_sym(t->contents);
+    }
+
+    if (strstr(t->tag, "string"))
+    {
+        return tl_value_read_str(t);
     }
 
     tl_value *x = NULL;
