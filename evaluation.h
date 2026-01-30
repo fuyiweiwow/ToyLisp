@@ -55,6 +55,14 @@ tl_value *builtin_le(tl_env* e, tl_value *v);
 
 tl_value *builtin_order(tl_env* e, tl_value *v, char *op);
 
+tl_value *builtin_eq(tl_env* e, tl_value *v); 
+
+tl_value *builtin_ne(tl_env* e, tl_value *v);
+
+tl_value *builtin_cmp(tl_env* e, tl_value *v, char *op); 
+
+int tl_value_eq(tl_value *x, tl_value *y);
+
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func);
 
 tl_value *tl_func_call(tl_env* e, tl_value *f, tl_value *a);

@@ -44,6 +44,9 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, ">=", builtin_ge);
     tl_env_add_builtin(e, "<=", builtin_le);
 
+    tl_env_add_builtin(e, "==", builtin_eq);
+    tl_env_add_builtin(e, "!=", builtin_ne);
+
 }
 
 tl_value *evaluate(tl_env *e, tl_value *v)
@@ -403,6 +406,79 @@ tl_value *builtin_order(tl_env *e, tl_value *v, char *op)
 
     destroy_tl_value(v);
     return tl_num(r);
+}
+
+tl_value *builtin_eq(tl_env *e, tl_value *v)
+{
+    return builtin_cmp(e, v, "==");
+}
+
+tl_value *builtin_ne(tl_env *e, tl_value *v)
+{
+    return builtin_cmp(e, v, "!=");
+}
+
+tl_value *builtin_cmp(tl_env *e, tl_value *v, char *op)
+{
+    BUILTIN_ARGS_COUNT_ASSERT(op, v, 2);
+    int r;
+    if (strcmp(op, "==") == 0)
+    {
+        r = tl_value_eq(v->cell[0], v->cell[1]);
+    }
+    else if (strcmp(op, "!=") == 0)
+    {
+        r = !tl_value_eq(v->cell[0], v->cell[1]);
+    }
+
+    destroy_tl_value(v);
+    return tl_num(r);
+}
+
+int tl_value_eq(tl_value *x, tl_value *y)
+{
+    if(x->type != y->type)
+    {
+        return 0;
+    }
+
+    switch (x->type)
+    {
+        case TL_VAL_NUM:
+            return (x->num == y->num);
+        case TL_VAL_ERR:
+            return (strcmp(x->err, y->err) == 0);
+        case TL_VAL_SYM:
+            return (strcmp(x->sym, y->sym) == 0);
+        case TL_VAL_FUNC:
+            if (x->func || y->func)
+            {
+                return x->func == y->func;
+            }
+            else
+            {
+                return tl_value_eq(x->formals, y->formals) &&
+                       tl_value_eq(x->body, y->body);
+            }
+        case TL_VAL_QEXPR:
+        case TL_VAL_SEXPR:
+            if (x->count != y->count)
+            {
+                return 0;
+            }
+            for (int i = 0; i < x->count; i++)
+            {
+                if (!tl_value_eq(x->cell[i], y->cell[i]))
+                {
+                    return 0;
+                }
+            }
+            return 1;
+        default:
+            break;
+    }
+
+    return 0;
 }
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)
