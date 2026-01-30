@@ -47,6 +47,8 @@ tl_value *builtin_var(tl_env* e, tl_value *v, char *func);
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func);
 
+tl_value *tl_func_call(tl_env* e, tl_value *f, tl_value *a);
+
 tl_value *tl_value_join(tl_value *x, tl_value *y);
 
 tl_value *tl_value_pop(tl_value *v, int i);

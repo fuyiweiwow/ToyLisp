@@ -121,7 +121,7 @@ tl_value *evaluate_sexpr(tl_env* e, tl_value *v)
         return tl_err("first element is not a function!");
     }
 
-    tl_value *result = first->func(e, v);
+    tl_value *result = tl_func_call(e, first,v);
     destroy_tl_value(first);
     return result;
 }
@@ -384,6 +384,47 @@ void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)
     tl_env_put(e, k, v);
     destroy_tl_value(k);
     destroy_tl_value(v);
+}
+
+tl_value *tl_func_call(tl_env *e, tl_value *f, tl_value *a)
+{
+    if(f->func)
+    {
+        return f->func(e, a);
+    }
+
+    int arg_count_given = a->count;
+    int formals_count = f->formals ? f->formals->count : 0;
+
+    while(a->count)
+    {
+        if(!f->formals || f->formals->count == 0)
+        {
+            destroy_tl_value(a);
+            return tl_err_ex(
+                "function passed invalid arguments. Got %i, Expected %i!", 
+                arg_count_given, 
+                formals_count);
+        }
+
+        tl_value *sym = tl_value_pop(f->formals, 0);
+        tl_value *val = tl_value_pop(a, 0);
+
+        tl_env_put(f->env, sym, val);
+
+        destroy_tl_value(sym);
+        destroy_tl_value(val);
+    }
+
+    destroy_tl_value(a);
+    if(f->formals->count == 0)
+    {
+        // All formals bound, evaluate
+        f->env->parent_env = e;
+        return builtin_eval(f->env, tl_value_add_cell(tl_sexpr(), tl_value_copy(f->body))); 
+    }
+
+    return tl_value_copy(f);
 }
 
 tl_value *tl_value_join(tl_value *x, tl_value *y)
