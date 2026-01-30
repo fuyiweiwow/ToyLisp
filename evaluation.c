@@ -476,6 +476,8 @@ int tl_value_eq(tl_value *x, tl_value *y)
                 }
             }
             return 1;
+        case TL_VAL_STR:
+            return (strcmp(x->str, y->str) == 0);
         default:
             break;
     }
@@ -700,6 +702,7 @@ char *tl_type_name(int type)
         case TL_VAL_SEXPR: return "S-Expression";
         case TL_VAL_QEXPR: return "Q-Expression";
         case TL_VAL_FUNC:  return "Function";
+        case TL_VAL_STR:   return "String";
         default:           return "Unknown";
     }    
 }

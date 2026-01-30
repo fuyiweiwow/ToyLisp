@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "mpc/mpc.h"
 #include <stdlib.h>
 #ifdef _WIN32
 #include <string.h>
@@ -21,6 +22,7 @@ struct tl_value{
     long num;
     char *err;
     char *sym;
+    char *str;
 
     // Expression
     int count;
@@ -40,7 +42,7 @@ struct tl_env{
     tl_value **vals;
 };
 
-enum { TL_VAL_NUM, TL_VAL_ERR, TL_VAL_SYM, TL_VAL_SEXPR, TL_VAL_QEXPR, TL_VAL_FUNC };
+enum { TL_VAL_NUM, TL_VAL_ERR, TL_VAL_SYM, TL_VAL_SEXPR, TL_VAL_QEXPR, TL_VAL_FUNC, TL_VAL_STR };
 
 tl_env *new_env(void);
 
@@ -63,6 +65,8 @@ tl_env *tl_env_copy(tl_env *e);
 void destroy_env(tl_env *e);
 
 tl_value *tl_num(long x);
+
+tl_value *tl_str(char *s);
 
 tl_value *tl_err(char *err);
 

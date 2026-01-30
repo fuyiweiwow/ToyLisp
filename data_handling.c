@@ -58,7 +58,7 @@ void tl_env_put_global(tl_env *e, tl_value *k, tl_value *v)
     {
         e = e->parent_env;
     }
-    
+
     tl_env_put(e, k, v);
 }
 
@@ -97,6 +97,15 @@ tl_value *tl_num(long x)
     tl_value *v = malloc(sizeof(tl_value));
     v->type = TL_VAL_NUM;
     v->num = x;
+    return v;
+}
+
+tl_value *tl_str(char *s)
+{
+    tl_value *v = malloc(sizeof(tl_value));
+    v->type = TL_VAL_STR;
+    v->str = malloc(strlen(s) + 1);
+    strcpy(v->str, s);
     return v;
 }
 
@@ -178,39 +187,43 @@ tl_value *tl_value_copy(tl_value *v)
 
     switch (v->type)
     {
-    case TL_VAL_NUM:
-        copy->num = v->num;
-        break;
-    case TL_VAL_FUNC:
-        if(v->func)
-        {
-            copy->func = v->func;
-        }
-        else 
-        {
-            copy->func = NULL;
-            copy->env = tl_env_copy(v->env);
-            copy->formals = tl_value_copy(v->formals);
-            copy->body = tl_value_copy(v->body);
-        }
-        break;
-    case TL_VAL_ERR:
-        copy->err = malloc(strlen(v->err) + 1);
-        strcpy(copy->err, v->err);
-        break;
-    case TL_VAL_SYM:
-        copy->sym = malloc(strlen(v->sym) + 1);
-        strcpy(copy->sym, v->sym);
-        break;
-    case TL_VAL_QEXPR:
-    case TL_VAL_SEXPR:
-        copy->count = v->count;
-        copy->cell = malloc(sizeof(tl_value*) * v->count);
-        for (int i = 0; i < v->count; i++)
-        {
-            copy->cell[i] = tl_value_copy(v->cell[i]);
-        }
-        break;
+        case TL_VAL_NUM:
+            copy->num = v->num;
+            break;
+        case TL_VAL_FUNC:
+            if(v->func)
+            {
+                copy->func = v->func;
+            }
+            else 
+            {
+                copy->func = NULL;
+                copy->env = tl_env_copy(v->env);
+                copy->formals = tl_value_copy(v->formals);
+                copy->body = tl_value_copy(v->body);
+            }
+            break;
+        case TL_VAL_ERR:
+            copy->err = malloc(strlen(v->err) + 1);
+            strcpy(copy->err, v->err);
+            break;
+        case TL_VAL_SYM:
+            copy->sym = malloc(strlen(v->sym) + 1);
+            strcpy(copy->sym, v->sym);
+            break;
+        case TL_VAL_QEXPR:
+        case TL_VAL_SEXPR:
+            copy->count = v->count;
+            copy->cell = malloc(sizeof(tl_value*) * v->count);
+            for (int i = 0; i < v->count; i++)
+            {
+                copy->cell[i] = tl_value_copy(v->cell[i]);
+            }
+            break;
+        case TL_VAL_STR:
+            copy->str = malloc(strlen(v->str) + 1);
+            strcpy(copy->str, v->str);
+            break;
     }
 
     return copy;
@@ -243,6 +256,9 @@ void destroy_tl_value(tl_value *v)
                 destroy_tl_value(v->formals);
                 destroy_tl_value(v->body);
             }
+            break;
+        case TL_VAL_STR:
+            free(v->str);
             break;
     }
 
@@ -298,6 +314,19 @@ void tl_value_print(tl_value *v)
                 putchar(' ');
                 tl_value_print(v->body);
                 putchar(')');
+            }
+            break;
+        case TL_VAL_STR:
+            {
+                /* Make a Copy of the string */
+                char* escaped = malloc(strlen(v->str)+1);
+                strcpy(escaped, v->str);
+                /* Pass it through the escape function */
+                escaped = mpcf_escape(escaped);
+                /* Print it between " characters */
+                printf("\"%s\"", escaped);
+                /* free the copied string */
+                free(escaped);
             }
             break;
     }
