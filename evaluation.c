@@ -97,7 +97,7 @@ tl_value *evaluate_sexpr(tl_env* e, tl_value *v)
         return tl_err("first element is not a function!");
     }
 
-    tl_value *result = tl_func_call(e, first,v);
+    tl_value *result = tl_func_call(e, first, v);
     destroy_tl_value(first);
     return result;
 }
@@ -384,6 +384,23 @@ tl_value *tl_func_call(tl_env *e, tl_value *f, tl_value *a)
         }
 
         tl_value *sym = tl_value_pop(f->formals, 0);
+
+        if (strcmp(sym->sym, "&") == 0)
+        {
+            if (f->formals->count != 1)
+            {
+                destroy_tl_value(a);
+                destroy_tl_value(sym);
+                return tl_err_ex("function format invalid. Symbol '&' not followed by single symbol.");
+            }
+
+            tl_value *nsym = tl_value_pop(f->formals, 0);
+            tl_env_put(f->env, nsym, builtin_list(e, a));
+            destroy_tl_value(sym);
+            destroy_tl_value(nsym);
+            break;
+        }
+
         tl_value *val = tl_value_pop(a, 0);
 
         tl_env_put(f->env, sym, val);
@@ -393,6 +410,23 @@ tl_value *tl_func_call(tl_env *e, tl_value *f, tl_value *a)
     }
 
     destroy_tl_value(a);
+    if (f->formals->count > 0 &&
+    strcmp(f->formals->cell[0]->sym, "&") == 0)
+    {
+        if (f->formals->count != 2)
+        {
+            return tl_err_ex("function format invalid. Symbol '&' not followed by single symbol.");
+        }
+
+        destroy_tl_value(tl_value_pop(f->formals, 0));
+        tl_value *sym = tl_value_pop(f->formals, 0);
+        tl_value *val = tl_qexpr();
+
+        tl_env_put(f->env, sym, val);
+        destroy_tl_value(sym);
+        destroy_tl_value(val);
+    }
+
     if(f->formals->count == 0)
     {
         // All formals bound, evaluate
