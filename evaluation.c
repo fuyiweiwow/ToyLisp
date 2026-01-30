@@ -7,42 +7,18 @@
     }
 
 #define FUNC_ARGS_COUNT_ASSERT(fn, v, cnt) \
-    if (strcmp(v->sym, fn) == 0) { \
-        destroy_tl_value(v); \
-        return tl_err_ex("error symbol. Got %s, Expected %s!", v->sym, fn);\
-    }\
-    if (!v->func) {\
-        int f_cnt = v->formals ? v->formals->count : 0; \
-        if (f_cnt != cnt) { \
-            destroy_tl_value(v); \
-            return tl_err_ex("incorrect number of formals. Got %i, Expected %i!", f_cnt, cnt);\
-        }\
-    } else {\
-        if (v->count != cnt) { \
-            destroy_tl_value(v); \
-            return tl_err_ex("incorrect number of arguments. Got %i, Expected %i!", v->count, cnt);\
-        }\
-    }
+        BUILTIN_ASSERT(v, v->count == cnt, \
+            "Function '%s' passed incorrect number of arguments. " \
+            "Got %i, Expected %i.", \
+            fn, v->count, cnt)
     
 
 #define FUNC_ARGS_TYPE_ASSERT(fn, v, idx, a_type) \
-    if (strcmp(v->sym, fn) == 0) { \
-        destroy_tl_value(v); \
-        return tl_err_ex("error symbol. Got %s, Expected %s!", v->sym, fn);\
-    }\
-    if (!v->func) {\
-        int e_type = v->formals && idx < v->formals->count ? v->formals->cell[idx]->type : -1; \
-        if (e_type != a_type) { \
-            destroy_tl_value(v); \
-            return tl_err_ex("incorrect type for formal %i. Got %s, Expected %s!", idx, tl_type_name(e_type), tl_type_name(a_type));\
-        }\
-    } else {\
-        int e_type = v->cell && idx < v->count ? v->cell[idx]->type : -1; \
-        if (e_type != a_type) { \
-            destroy_tl_value(v); \
-            return tl_err_ex("incorrect type for argument %i. Got %s, Expected %s!", idx, tl_type_name(e_type), tl_type_name(a_type));\
-        }\
-    }
+        BUILTIN_ASSERT(v, v->cell[idx]->type == a_type, \
+            "Function '%s' passed incorrect type for argument %i. " \
+            "Got %s, Expected %s.", \
+            fn, idx, tl_type_name(v->cell[idx]->type), tl_type_name(a_type))
+
     
 
 
