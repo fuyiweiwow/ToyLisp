@@ -16,17 +16,25 @@ typedef tl_value *(*tl_builtin)(tl_env*, tl_value*);
 
 struct tl_value{
     int type;
+
+    // Basic
     long num;
     char *err;
     char *sym;
 
+    // Expression
     int count;
     struct tl_value **cell;
 
+    // Function
     tl_builtin func;
+    tl_env *env;
+    tl_value *formals;
+    tl_value *body;
 };
 
 struct tl_env{
+    tl_env* parent_env;
     int count;
     char **syms;
     tl_value **vals;
@@ -48,6 +56,10 @@ tl_value *tl_env_get(tl_env *e, tl_value *k);
 /// @param v 
 void tl_env_put(tl_env *e, tl_value *k, tl_value *v);
 
+void tl_env_put_global(tl_env *e, tl_value *k, tl_value *v);
+
+tl_env *tl_env_copy(tl_env *e);
+
 void destroy_env(tl_env *e);
 
 tl_value *tl_num(long x);
@@ -63,6 +75,8 @@ tl_value *tl_sexpr(void);
 tl_value *tl_qexpr(void);
 
 tl_value *tl_func(tl_builtin func);
+
+tl_value *tl_lambda(tl_value *formals, tl_value *body);
 
 tl_value *tl_value_copy(tl_value *v);
 

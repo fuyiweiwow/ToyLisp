@@ -5,6 +5,7 @@ tl_env *new_env(void)
 {
     tl_env *e = malloc(sizeof(tl_env));
     e->count = 0;
+    e->parent_env = NULL;
     e->syms = NULL;
     e->vals = NULL;
     return e;
@@ -18,6 +19,11 @@ tl_value *tl_env_get(tl_env *e, tl_value *k)
         {
             return tl_value_copy(e->vals[i]);
         }
+    }
+
+    if (e->parent_env)
+    {
+        return tl_env_get(e->parent_env, k);
     }
     
     return tl_err_ex("unbound symbol '%s'!", k->sym);
@@ -44,6 +50,33 @@ void tl_env_put(tl_env *e, tl_value *k, tl_value *v)
     e->syms[e->count - 1] = malloc(strlen(k->sym) + 1);
     strcpy(e->syms[e->count - 1], k->sym);
 
+}
+
+void tl_env_put_global(tl_env *e, tl_value *k, tl_value *v)
+{
+    while (e->parent_env)
+    {
+        e = e->parent_env;
+    }
+    
+    tl_env_put(e, k, v);
+}
+
+tl_env *tl_env_copy(tl_env *e)
+{
+    tl_env * copy = new_env();
+    copy->parent_env = e->parent_env;
+    copy->count = e->count;
+    copy->syms = malloc(sizeof(char*) * e->count);
+    copy->vals = malloc(sizeof(tl_value*) * e->count);
+
+    for (size_t i = 0; i < e->count; i++)
+    {
+        copy->syms[i] = malloc(strlen(e->syms[i]) + 1);
+        strcpy(copy->syms[i], e->syms[i]);
+        copy->vals[i] = tl_value_copy(e->vals[i]);
+    }
+    return copy;
 }
 
 void destroy_env(tl_env *e)
@@ -127,6 +160,17 @@ tl_value *tl_func(tl_builtin func)
     return v;
 }
 
+tl_value *tl_lambda(tl_value *formals, tl_value *body)
+{
+    tl_value *v = malloc(sizeof(tl_value));
+    v->type = TL_VAL_FUNC;
+    v->func = NULL;
+    v->env = new_env();
+    v->formals = formals;
+    v->body = body;
+    return v;
+}
+
 tl_value *tl_value_copy(tl_value *v)
 {
     tl_value * copy = malloc(sizeof(tl_value));
@@ -138,7 +182,17 @@ tl_value *tl_value_copy(tl_value *v)
         copy->num = v->num;
         break;
     case TL_VAL_FUNC:
-        copy->func = v->func;
+        if(v->func)
+        {
+            copy->func = v->func;
+        }
+        else 
+        {
+            copy->func = NULL;
+            copy->env = tl_env_copy(v->env);
+            copy->formals = tl_value_copy(v->formals);
+            copy->body = tl_value_copy(v->body);
+        }
         break;
     case TL_VAL_ERR:
         copy->err = malloc(strlen(v->err) + 1);
@@ -183,6 +237,12 @@ void destroy_tl_value(tl_value *v)
             free(v->cell);
             break;
         case TL_VAL_FUNC:
+            if(!v->func)
+            {
+                destroy_env(v->env);
+                destroy_tl_value(v->formals);
+                destroy_tl_value(v->body);
+            }
             break;
     }
 
@@ -227,7 +287,18 @@ void tl_value_print(tl_value *v)
             tl_expr_print(v, '{', '}');
             break;
         case TL_VAL_FUNC:
-            printf("<function>");
+            if(v->func)
+            {
+                printf("<builtin>");
+            }
+            else
+            {
+                printf("(\\ ");
+                tl_value_print(v->formals);
+                putchar(' ');
+                tl_value_print(v->body);
+                putchar(')');
+            }
             break;
     }
 }

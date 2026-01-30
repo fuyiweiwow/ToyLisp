@@ -29,7 +29,21 @@ tl_value *builtin_eval(tl_env* e, tl_value *v);
 
 tl_value *builtin_join(tl_env* e, tl_value *v);
 
+/// @brief define variable in local environment
+/// @param e 
+/// @param v 
+/// @return 
+tl_value *builtin_put(tl_env* e, tl_value *v);
+
+/// @brief define variable in global environment
+/// @param e 
+/// @param v 
+/// @return 
 tl_value *builtin_def(tl_env* e, tl_value *v);
+
+tl_value *builtin_lambda(tl_env* e, tl_value *v);
+
+tl_value *builtin_var(tl_env* e, tl_value *v, char *func);
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func);
 

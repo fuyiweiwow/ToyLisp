@@ -6,6 +6,47 @@
         return err;\
     }
 
+#define FUNC_ARGS_COUNT_ASSERT(fn, v, cnt) \
+    if (strcmp(v->sym, fn) == 0) { \
+        destroy_tl_value(v); \
+        return tl_err_ex("error symbol. Got %s, Expected %s!", v->sym, fn);\
+    }\
+    if (!v->func) {\
+        int f_cnt = v->formals ? v->formals->count : 0; \
+        if (f_cnt != cnt) { \
+            destroy_tl_value(v); \
+            return tl_err_ex("incorrect number of formals. Got %i, Expected %i!", f_cnt, cnt);\
+        }\
+    } else {\
+        if (v->count != cnt) { \
+            destroy_tl_value(v); \
+            return tl_err_ex("incorrect number of arguments. Got %i, Expected %i!", v->count, cnt);\
+        }\
+    }
+    
+
+#define FUNC_ARGS_TYPE_ASSERT(fn, v, idx, a_type) \
+    if (strcmp(v->sym, fn) == 0) { \
+        destroy_tl_value(v); \
+        return tl_err_ex("error symbol. Got %s, Expected %s!", v->sym, fn);\
+    }\
+    if (!v->func) {\
+        int e_type = v->formals && idx < v->formals->count ? v->formals->cell[idx]->type : -1; \
+        if (e_type != a_type) { \
+            destroy_tl_value(v); \
+            return tl_err_ex("incorrect type for formal %i. Got %s, Expected %s!", idx, tl_type_name(e_type), tl_type_name(a_type));\
+        }\
+    } else {\
+        int e_type = v->cell && idx < v->count ? v->cell[idx]->type : -1; \
+        if (e_type != a_type) { \
+            destroy_tl_value(v); \
+            return tl_err_ex("incorrect type for argument %i. Got %s, Expected %s!", idx, tl_type_name(e_type), tl_type_name(a_type));\
+        }\
+    }
+    
+
+
+
 void tl_env_add_builtins(tl_env *e)
 {
     /* List Functions */
@@ -15,11 +56,14 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "eval", builtin_eval);
     tl_env_add_builtin(e, "join", builtin_join);
     tl_env_add_builtin(e, "def" , builtin_def);
+    tl_env_add_builtin(e, "=", builtin_put);
     /* Mathematical Functions */
     tl_env_add_builtin(e, "+", builtin_add);
     tl_env_add_builtin(e, "-", builtin_sub);
     tl_env_add_builtin(e, "*", builtin_mul);
     tl_env_add_builtin(e, "/", builtin_div);
+    tl_env_add_builtin(e, "\\", builtin_lambda);
+
 }
 
 tl_value *evaluate(tl_env *e, tl_value *v)
@@ -261,32 +305,75 @@ tl_value *builtin_join(tl_env* e,tl_value *v)
     return x;
 }
 
+tl_value *builtin_put(tl_env *e, tl_value *v)
+{
+    return builtin_var(e, v, "=");
+}
+
 tl_value *builtin_def(tl_env *e, tl_value *v)
 {
-    BUILTIN_ASSERT(
-        v, 
-        v->cell[0]->type == TL_VAL_QEXPR, 
-        "function 'def' passed incorrect type for argument 0. "
-        "Got %s, Expected %s!", 
-        tl_type_name(v->cell[0]->type), 
-        tl_type_name(TL_VAL_QEXPR));
+    return builtin_var(e, v, "def");
+}
 
-    // symbol list
+tl_value *builtin_lambda(tl_env *e, tl_value *v)
+{
+    FUNC_ARGS_COUNT_ASSERT("\\", v, 2);
+    FUNC_ARGS_TYPE_ASSERT("\\", v, 0, TL_VAL_QEXPR);
+    FUNC_ARGS_TYPE_ASSERT("\\", v, 1, TL_VAL_QEXPR);
+
+    for (size_t i = 0; i < v->cell[0]->count; i++)
+    {
+        BUILTIN_ASSERT(
+            v, 
+            v->cell[0]->cell[i]->type == TL_VAL_SYM, 
+            "cannot define non-symbol. Got %s, Expected %s!", 
+            tl_type_name(v->cell[0]->cell[i]->type), 
+            tl_type_name(TL_VAL_SYM));
+    }
+
+    tl_value *formals = tl_value_pop(v, 0);
+    tl_value *body = tl_value_pop(v, 0);
+    destroy_tl_value(v);
+    return tl_lambda(formals, body);
+}
+
+tl_value *builtin_var(tl_env *e, tl_value *v, char *func)
+{
+    FUNC_ARGS_TYPE_ASSERT(func, v, 0, TL_VAL_QEXPR);
     tl_value *syms = v->cell[0];
     for (size_t i = 0; i < syms->count; i++)
     {
-        BUILTIN_ASSERT(v, syms->cell[i]->type == TL_VAL_SYM, "function 'def' cannot define non-symbol");
+        BUILTIN_ASSERT(
+            v, 
+            syms->cell[i]->type == TL_VAL_SYM, 
+            "function '%s' cannot define non-symbol. Got %s, Expected %s!", 
+            func,
+            tl_type_name(syms->cell[i]->type), 
+            tl_type_name(TL_VAL_SYM));
     }
 
-    BUILTIN_ASSERT(v, syms->count == v->count - 1, "function 'def' cannot define incorrect number of values to symbols");
+    BUILTIN_ASSERT(
+        v, 
+        syms->count == v->count - 1, 
+        "function '%s' cannot define incorrect number of values to symbols. Got %i, Expected %i!", 
+        func,
+        syms->count,
+        v->count - 1);
 
     for (size_t i = 0; i < syms->count; i++)
     {
-        tl_env_put(e, syms->cell[i], v->cell[i + 1]);
+        if (strcmp(func, "def") == 0)
+        {
+            tl_env_put_global(e, syms->cell[i], v->cell[i + 1]);
+        }
+
+        if (strcmp(func, "=") == 0)
+        {
+            tl_env_put(e, syms->cell[i], v->cell[i + 1]);
+        }
     }
-    
+       
     destroy_tl_value(v);
-    // return empty () if successful
     return tl_sexpr();
 }
 
