@@ -699,6 +699,10 @@ tl_value *tl_value_read(mpc_ast_t *t)
         { 
             continue; 
         }
+        if (strcmp(t->children[i]->tag, "comment") == 0) 
+        { 
+            continue; 
+        }
         x = tl_value_add_cell(x, tl_value_read(t->children[i]));
     }
     

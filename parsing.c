@@ -5,6 +5,7 @@
         number    : /-?[0-9]+/ ;                                            \
         string    : /\"(\\\\.|[^\"])*\"/ ;                                  \
         symbol    : /[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;                       \
+        comment   : /;[^\\r\\n]*/ ;                                         \
         sexpr     : '(' <expr>* ')' ;                                       \
         qexpr     : '{' <expr>* '}' ;                                       \
         expr      : <number> | <string> | <symbol> | <sexpr> | <qexpr> ;    \
@@ -23,6 +24,7 @@ tl_parser *build_parser()
     parser->expr        = mpc_new("expr");
     parser->tl          = mpc_new("tl");
     parser->string      = mpc_new("string");
+    parser->comment     = mpc_new("comment");
 
     // Define use mpc api
     mpca_lang(  MPCA_LANG_DEFAULT,
@@ -33,6 +35,7 @@ tl_parser *build_parser()
                 parser->q_expr,
                 parser->expr,
                 parser->string,
+                parser->comment,
                 parser->tl);
 
     return parser;
@@ -41,12 +44,13 @@ tl_parser *build_parser()
 void destroy_parser(tl_parser *parser)
 {
     mpc_cleanup(
-        7, 
+        8, 
         parser->number, 
         parser->symbol, 
         parser->expr, 
         parser->q_expr,
         parser->s_expr,
         parser->string,
+        parser->comment,
         parser->tl);
 }
