@@ -48,7 +48,9 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "!=", builtin_ne);
 
     tl_env_add_builtin(e, "if", builtin_if);
-
+    tl_env_add_builtin(e, "load", builtin_load);
+    tl_env_add_builtin(e, "print", builtin_print);
+    tl_env_add_builtin(e, "error", builtin_error);
 }
 
 tl_value *evaluate(tl_env *e, tl_value *v)
@@ -544,6 +546,30 @@ tl_value *builtin_load(tl_env *e,tl_value *v,  mpc_parser_t *tl)
     free(err_msg);
     destroy_tl_value(v);
 
+    return err;
+}
+
+tl_value *builtin_print(tl_env *e, tl_value *v)
+{
+    for (size_t i = 0; i < v->count; i++)
+    {
+        tl_value_println(v->cell[i]);
+        putchar(' ');
+    }
+
+    putchar('\n');
+    destroy_tl_value(v);
+
+    return tl_sexpr();
+}
+
+tl_value *builtin_error(tl_env *e, tl_value *v)
+{
+    BUILTIN_ARGS_COUNT_ASSERT("error", v, 1);
+    BUILTIN_ARGS_TYPE_ASSERT("error", v, 0, TL_VAL_STR);
+
+    tl_value *err = tl_err_ex(v->cell[0]->str);
+    destroy_tl_value(v);
     return err;
 }
 
