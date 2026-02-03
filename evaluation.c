@@ -48,7 +48,6 @@ void tl_env_add_builtins(tl_env *e)
     tl_env_add_builtin(e, "!=", builtin_ne);
 
     tl_env_add_builtin(e, "if", builtin_if);
-    tl_env_add_builtin(e, "load", builtin_load);
     tl_env_add_builtin(e, "print", builtin_print);
     tl_env_add_builtin(e, "error", builtin_error);
 }
@@ -511,7 +510,7 @@ tl_value *builtin_if(tl_env *e, tl_value *v)
     return x;
 }
 
-tl_value *builtin_load(tl_env *e,tl_value *v,  mpc_parser_t *tl)
+tl_value *builtin_load(tl_env *e, tl_value *v,  mpc_parser_t *tl)
 {
     BUILTIN_ARGS_COUNT_ASSERT("load", v, 1);
     BUILTIN_ARGS_TYPE_ASSERT("load", v, 0, TL_VAL_STR);

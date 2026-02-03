@@ -26,12 +26,20 @@ void add_history(char* unused) {}
 #include <editline/history.h>
 #endif
 
+tl_parser *parser = NULL;
+
+tl_value* builtin_load_ex(tl_env *e, tl_value *v)
+{
+    return builtin_load(e, v, parser->tl);
+}
 
 int main(int argc, char** argv)
 {
     tl_env *env = new_env();
     tl_env_add_builtins(env);
-    tl_parser *parser = build_parser();
+    parser = build_parser();
+
+    tl_env_add_builtin(env, "load", builtin_load_ex);
 
     puts("ToyLisp Version 0.0.0.1");
     puts("Press Ctrl + c to exit\n");
@@ -80,3 +88,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
