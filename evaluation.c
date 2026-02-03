@@ -509,6 +509,43 @@ tl_value *builtin_if(tl_env *e, tl_value *v)
     return x;
 }
 
+tl_value *builtin_load(tl_env *e,tl_value *v,  mpc_parser_t *tl)
+{
+    BUILTIN_ARGS_COUNT_ASSERT("load", v, 1);
+    BUILTIN_ARGS_TYPE_ASSERT("load", v, 0, TL_VAL_STR);
+
+    mpc_result_t r;
+    if (mpc_parse_contents(v->cell[0]->str, tl, &r))
+    {
+        tl_value *expr = tl_value_read(r.output);
+        mpc_ast_delete(r.output);
+
+        while (expr->count)
+        {
+            tl_value *x = evaluate(e, tl_value_pop(expr, 0));
+            if (x->type == TL_VAL_ERR)
+            {
+                tl_value_println(x);
+            }
+
+            destroy_tl_value(x);
+        }
+        
+        destroy_tl_value(expr);
+        destroy_tl_value(v);
+
+        return tl_sexpr();
+    }
+
+    char *err_msg = mpc_err_string(r.error);
+    mpc_err_delete(r.error);
+    
+    tl_value *err = tl_err_ex("Could not load Library %s", err_msg);
+    free(err_msg);
+    destroy_tl_value(v);
+
+    return err;
+}
 
 void tl_env_add_builtin(tl_env *e, char *name, tl_builtin func)
 {

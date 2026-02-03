@@ -36,6 +36,21 @@ int main(int argc, char** argv)
     puts("ToyLisp Version 0.0.0.1");
     puts("Press Ctrl + c to exit\n");
 
+    if (argc >= 2)
+    {
+        for (size_t i = 1; i < argc; i++)
+        {
+            tl_value *args = tl_value_add_cell(tl_sexpr(), tl_str(argv[i]));
+            tl_value *x = builtin_load(env, args, parser->tl);
+            if (x->type == TL_VAL_ERR)
+            {
+                tl_value_println(x);
+            }
+
+            destroy_tl_value(x);
+        }
+    }
+
     for(;;)
     {
         char *input = realine("tl> ");
